@@ -83,7 +83,9 @@
   .modes svg { width: 20px; height: 20px; flex: none; }
 
   #lock .fill { position: absolute; inset: 0; background: var(--accent); opacity: .35; transform: scaleX(0); transform-origin: left; pointer-events: none; }
-  #lock.holding .fill { transform: scaleX(1); transition: transform .8s linear; }
+  #lock.confirming .fill { background: #fff; opacity: .3; animation: drain 3s linear forwards; }
+  @keyframes drain { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+  #lock { max-width: 100%; }
   #lock span { position: relative; }
 
   .sheet {
@@ -93,7 +95,7 @@
   }
   svg.map { display: block; width: 100%; height: auto; user-select: none; -webkit-user-select: none; }
   .sheet.zoom svg.map { width: 250%; }
-  .planet { cursor: pointer; outline: none; }
+  .planet { cursor: pointer; outline: none; -webkit-tap-highlight-color: transparent; }
   .planet .hit { fill: transparent; }
   .planet .m { opacity: 0; transition: opacity .12s ease; pointer-events: none; }
   .planet.s-d .m-d, .planet.s-l .m-b, .planet.s-l .m-l, .planet.s-v .m-v { opacity: 1; }
@@ -102,10 +104,12 @@
   .m-v { fill: none; stroke: #b3262e; stroke-width: 8; stroke-linecap: round; }
   .planet:focus-visible .hit { stroke: #1f4d7a; stroke-width: 4; }
   .locked .planet { pointer-events: none; }
+  .leal-mode .planet.remote .hit { fill: rgba(0,0,0,.16); }
+  .note { font-size: 14px; line-height: 1.4; padding: 10px 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); color: var(--fg); }
 
   .banner { font-size: 14px; line-height: 1.4; padding: 10px 12px; border: 1px solid var(--danger); border-radius: 6px; color: var(--fg); background: var(--panel); }
   .hint { font-size: 13px; color: var(--muted); line-height: 1.45; max-width: 65ch; margin: 0; }
-  @media (prefers-reduced-motion: reduce) { .planet .m { transition: none; } #lock.holding .fill { transition: none; } }
+  @media (prefers-reduced-motion: reduce) { .planet .m { transition: none; } #lock.confirming .fill { animation: none; transform: scaleX(1); } }
 </style>
 </head>
 <body>
@@ -140,6 +144,8 @@
     </button>
   </div>
 
+  <div class="note" id="note" role="status" aria-live="polite" hidden></div>
+
   <div class="banner" id="nostore" data-i18n="nostore" hidden>Este navegador no está guardando las marcas. Si cierras la página se perderán. Ábrelo en Chrome o Safari desde el enlace, o instálalo en la pantalla de inicio.</div>
 
   <div class="sheet" id="sheet">
@@ -164,30 +170,36 @@
     ["Hoth",1618,758,33],["Alderaan",704,778,34],["Bespin",1395,802,30],["Ord Mantell",566,844,28],
     ["Ilum",342,904,39],["Corellia",1123,904,40],["Endor",1498,926,38],["Coruscant",860,933,52]
   ];
+  /* Sistemas remotos (sin espacio de lealtad): nunca pueden ser leales. */
+  var REMOTE_LIST = ["Yavin", "Dathomir", "Dantooine", "Ilum", "Tatooine", "Dagobah", "Hoth", "Endor"];
+  var REMOTE = {};
+  REMOTE_LIST.forEach(function (n) { REMOTE[n] = true; });
   var STR = {
     es: {
       title: "Mapa de Sondas",
       desc: "Mapa interactivo para marcar los planetas descubiertos en Star Wars Rebellion.",
       discovered: "planetas descubiertos", loyalWord: "Leales", emptyWord: "Vacíos",
       undo: "Deshacer", zoomIn: "Ampliar", zoomOut: "Reducir",
-      lock: "Bloquear", unlockHold: "Mantén para desbloquear", clear: "Limpiar todo",
+      lock: "Bloquear", unlock: "Desbloquear", unlockConfirm: "Toca otra vez para desbloquear", clear: "Limpiar todo",
+      remoteNote: "Los sistemas remotos son neutrales: no se pueden marcar como leales.",
       mark: "Marcar", mDisc: "Descubierto", mLoyal: "Leal", mEmpty: "Vacío",
       lDisc: "descubierto", lLoyal: "leal", lEmpty: "vacío",
       modesAria: "Qué marcar", mapAria: "Mapa de la galaxia", langAria: "Idioma",
       nostore: "Este navegador no está guardando las marcas. Si cierras la página se perderán. Ábrelo en Chrome o Safari desde el enlace, o instálalo en la pantalla de inicio.",
-      hint: "Elige qué marcar y toca un círculo. Tócalo otra vez con el mismo modo para quitar la marca. Las marcas se guardan en este teléfono y nadie más las ve. Bloquear evita toques accidentales: para desbloquear, mantén pulsado el botón."
+      hint: "Elige qué marcar y toca un círculo. Tócalo otra vez con el mismo modo para quitar la marca. Las marcas se guardan en este teléfono y nadie más las ve. Bloquear evita toques accidentales: para desbloquear, toca el botón dos veces seguidas. Los sistemas remotos no admiten Leal."
     },
     en: {
       title: "Probe Card Tracker",
       desc: "Interactive map to mark discovered planets in Star Wars Rebellion.",
       discovered: "discovered planets", loyalWord: "Loyal", emptyWord: "Empty",
       undo: "Undo", zoomIn: "Zoom in", zoomOut: "Zoom out",
-      lock: "Lock", unlockHold: "Hold to unlock", clear: "Clear all",
+      lock: "Lock", unlock: "Unlock", unlockConfirm: "Tap again to unlock", clear: "Clear all",
+      remoteNote: "Remote systems are neutral: they can't be marked as loyal.",
       mark: "Mark", mDisc: "Discovered", mLoyal: "Loyal", mEmpty: "Empty",
       lDisc: "discovered", lLoyal: "loyal", lEmpty: "empty",
       modesAria: "What to mark", mapAria: "Galaxy map", langAria: "Language",
       nostore: "This browser is not saving your marks. If you close the page they will be lost. Open the link in Chrome or Safari, or install it on your home screen.",
-      hint: "Pick what to mark and tap a circle. Tap it again with the same mode to remove the mark. Marks are saved on this phone and nobody else can see them. Lock prevents accidental taps: to unlock, press and hold the button."
+      hint: "Pick what to mark and tap a circle. Tap it again with the same mode to remove the mark. Marks are saved on this phone and nobody else can see them. Lock prevents accidental taps: to unlock, tap the button twice in a row. Remote systems can't be marked Loyal."
     }
   };
   var LANG_KEY = "probe-lang";
@@ -235,6 +247,7 @@
       var o = JSON.parse(old) || {};
       for (var nm in o) marks[nm] = "d";
     }
+    for (var rn in marks) { if (marks[rn] === "l" && REMOTE[rn]) marks[rn] = "d"; }
     localStorage.setItem("probe-test", "1");
     localStorage.removeItem("probe-test");
   } catch (e) { storeOk = false; }
@@ -246,7 +259,7 @@
   function paint(name) {
     var g = nodes[name];
     var s = marks[name];
-    g.setAttribute("class", "planet" + (s ? " s-" + s : ""));
+    g.setAttribute("class", "planet" + (REMOTE[name] ? " remote" : "") + (s ? " s-" + s : ""));
     g.setAttribute("aria-label", name + (s ? ", " + t(LABEL_KEY[s]) : ""));
     g.setAttribute("aria-pressed", s ? "true" : "false");
   }
@@ -260,8 +273,16 @@
 
   function paintAll() { PLANETS.forEach(function (p) { paint(p[0]); }); update(); }
 
+  var noteEl = document.getElementById("note");
+  var noteTimer = null;
+  function showNote(msg) {
+    noteEl.textContent = msg; noteEl.hidden = false;
+    if (noteTimer) clearTimeout(noteTimer);
+    noteTimer = setTimeout(function () { noteEl.hidden = true; }, 3000);
+  }
   function tap(name) {
     if (locked) return;
+    if (mode === "l" && REMOTE[name]) { showNote(t("remoteNote")); return; }
     if (marks[name] === mode) delete marks[name]; else marks[name] = mode;
     backup = null; undoBtn.hidden = true;
     paint(name); update(); save();
@@ -291,6 +312,8 @@
     b.addEventListener("click", function () {
       if (locked) return;
       mode = b.getAttribute("data-mode");
+      app.classList.toggle("leal-mode", mode === "l");
+      noteEl.hidden = true;
       modeBtns.forEach(function (x) {
         var on = x === b;
         x.classList.toggle("on", on);
@@ -322,34 +345,37 @@
     if (!z) { sheet.scrollLeft = 0; sheet.scrollTop = 0; }
   });
 
-  /* Bloqueo: se activa con un toque y se desactiva manteniendo pulsado 0,8 s (o con Enter desde teclado). */
+  /* Bloqueo: se activa con un toque y se desactiva con dos toques seguidos. */
   function setLocked(v) {
     locked = v;
     app.classList.toggle("locked", v);
     lockBtn.classList.toggle("on", v);
     lockBtn.setAttribute("aria-pressed", v ? "true" : "false");
-    lockTxt.textContent = v ? t("unlockHold") : t("lock");
+    stopConfirm();
     clearBtn.disabled = v;
     undoBtn.disabled = v;
     modeBtns.forEach(function (b) { b.disabled = v; });
   }
-  var holdTimer = null;
-  function cancelHold() {
-    if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
-    lockBtn.classList.remove("holding");
+  var confirming = false;
+  var confTimer = null;
+  function lockLabel() { return !locked ? t("lock") : (confirming ? t("unlockConfirm") : t("unlock")); }
+  function stopConfirm() {
+    confirming = false;
+    if (confTimer) { clearTimeout(confTimer); confTimer = null; }
+    lockBtn.classList.remove("confirming");
+    lockTxt.textContent = lockLabel();
   }
-  lockBtn.addEventListener("pointerdown", function (e) {
-    if (!locked) return;
-    e.preventDefault();
-    lockBtn.classList.add("holding");
-    holdTimer = setTimeout(function () { cancelHold(); setLocked(false); }, 800);
-  });
-  ["pointerup", "pointerleave", "pointercancel"].forEach(function (ev) { lockBtn.addEventListener(ev, cancelHold); });
-  lockBtn.addEventListener("click", function (e) {
+  /* Desbloquear: primer toque pide confirmación (3 s), segundo toque desbloquea. */
+  lockBtn.addEventListener("click", function () {
     if (!locked) { setLocked(true); return; }
-    if (e.detail === 0) setLocked(false); /* teclado */
+    if (confirming) { stopConfirm(); setLocked(false); return; }
+    confirming = true;
+    lockBtn.classList.remove("confirming");
+    void lockBtn.offsetWidth;
+    lockBtn.classList.add("confirming");
+    lockTxt.textContent = lockLabel();
+    confTimer = setTimeout(stopConfirm, 3000);
   });
-  lockBtn.addEventListener("contextmenu", function (e) { if (locked) e.preventDefault(); });
 
   var langBtns = Array.prototype.slice.call(document.querySelectorAll("[data-lang]"));
   var descMeta = document.querySelector('meta[name="description"]');
@@ -364,7 +390,7 @@
       el.setAttribute("aria-label", t(el.getAttribute("data-i18n-aria")));
     });
     zoomBtn.textContent = sheet.classList.contains("zoom") ? t("zoomOut") : t("zoomIn");
-    lockTxt.textContent = locked ? t("unlockHold") : t("lock");
+    lockTxt.textContent = lockLabel();
     langBtns.forEach(function (b) {
       var on = b.getAttribute("data-lang") === lang;
       b.classList.toggle("on", on);
