@@ -95,6 +95,7 @@
   }
   svg.map { display: block; width: 100%; height: auto; user-select: none; -webkit-user-select: none; }
   .sheet.zoom svg.map { width: 250%; }
+  .planet.fixed { cursor: not-allowed; }
   .planet { cursor: pointer; outline: none; -webkit-tap-highlight-color: transparent; }
   .planet .hit { fill: transparent; }
   .planet .m { opacity: 0; transition: opacity .12s ease; pointer-events: none; }
@@ -116,7 +117,7 @@
 <div class="app" id="app">
   <div class="bar">
     <div class="count" aria-live="polite">
-      <span class="n" id="n">0</span><span class="of">/ 32</span><span class="lbl" data-i18n="discovered">planetas descubiertos</span>
+      <span class="n" id="n">0</span><span class="of" id="total">/ 31</span><span class="lbl" data-i18n="discovered">planetas descubiertos</span>
       <span class="extra" id="extra">Leales 0 · Vacíos 0</span>
     </div>
     <div class="actions">
@@ -172,6 +173,7 @@
   ];
   /* Sistemas remotos (sin espacio de lealtad): nunca pueden ser leales. */
   var REMOTE_LIST = ["Yavin", "Dathomir", "Dantooine", "Ilum", "Tatooine", "Dagobah", "Hoth", "Endor"];
+  var FIXED = { "Coruscant": true }; /* base imperial: no se marca nunca */
   var REMOTE = {};
   REMOTE_LIST.forEach(function (n) { REMOTE[n] = true; });
   var STR = {
@@ -182,11 +184,12 @@
       undo: "Deshacer", zoomIn: "Ampliar", zoomOut: "Reducir",
       lock: "Bloquear", unlock: "Desbloquear", unlockConfirm: "Toca otra vez para desbloquear", clear: "Limpiar todo",
       remoteNote: "Los sistemas remotos son neutrales: no se pueden marcar como leales.",
+      fixedNote: "Coruscant es la base imperial: siempre es del Imperio y no se puede marcar.",
       mark: "Marcar", mDisc: "Descubierto", mLoyal: "Leal", mEmpty: "Vacío",
       lDisc: "descubierto", lLoyal: "leal", lEmpty: "vacío",
       modesAria: "Qué marcar", mapAria: "Mapa de la galaxia", langAria: "Idioma",
       nostore: "Este navegador no está guardando las marcas. Si cierras la página se perderán. Ábrelo en Chrome o Safari desde el enlace, o instálalo en la pantalla de inicio.",
-      hint: "Elige qué marcar y toca un círculo. Tócalo otra vez con el mismo modo para quitar la marca. Las marcas se guardan en este teléfono y nadie más las ve. Bloquear evita toques accidentales: para desbloquear, toca el botón dos veces seguidas. Los sistemas remotos no admiten Leal."
+      hint: "Elige qué marcar y toca un círculo. Tócalo otra vez con el mismo modo para quitar la marca. Las marcas se guardan en este teléfono y nadie más las ve. Bloquear evita toques accidentales: para desbloquear, toca el botón dos veces seguidas. Los sistemas remotos no admiten Leal. Coruscant es del Imperio y no se marca."
     },
     en: {
       title: "Probe Card Tracker",
@@ -195,11 +198,12 @@
       undo: "Undo", zoomIn: "Zoom in", zoomOut: "Zoom out",
       lock: "Lock", unlock: "Unlock", unlockConfirm: "Tap again to unlock", clear: "Clear all",
       remoteNote: "Remote systems are neutral: they can't be marked as loyal.",
+      fixedNote: "Coruscant is the Imperial base: it always belongs to the Empire and can't be marked.",
       mark: "Mark", mDisc: "Discovered", mLoyal: "Loyal", mEmpty: "Empty",
       lDisc: "discovered", lLoyal: "loyal", lEmpty: "empty",
       modesAria: "What to mark", mapAria: "Galaxy map", langAria: "Language",
       nostore: "This browser is not saving your marks. If you close the page they will be lost. Open the link in Chrome or Safari, or install it on your home screen.",
-      hint: "Pick what to mark and tap a circle. Tap it again with the same mode to remove the mark. Marks are saved on this phone and nobody else can see them. Lock prevents accidental taps: to unlock, tap the button twice in a row. Remote systems can't be marked Loyal."
+      hint: "Pick what to mark and tap a circle. Tap it again with the same mode to remove the mark. Marks are saved on this phone and nobody else can see them. Lock prevents accidental taps: to unlock, tap the button twice in a row. Remote systems can't be marked Loyal. Coruscant is the Empire's and can't be marked."
     }
   };
   var LANG_KEY = "probe-lang";
@@ -247,7 +251,7 @@
       var o = JSON.parse(old) || {};
       for (var nm in o) marks[nm] = "d";
     }
-    for (var rn in marks) { if (marks[rn] === "l" && REMOTE[rn]) marks[rn] = "d"; }
+    for (var rn in marks) { if (FIXED[rn]) delete marks[rn]; else if (marks[rn] === "l" && REMOTE[rn]) marks[rn] = "d"; }
     localStorage.setItem("probe-test", "1");
     localStorage.removeItem("probe-test");
   } catch (e) { storeOk = false; }
@@ -259,7 +263,7 @@
   function paint(name) {
     var g = nodes[name];
     var s = marks[name];
-    g.setAttribute("class", "planet" + (REMOTE[name] ? " remote" : "") + (s ? " s-" + s : ""));
+    g.setAttribute("class", "planet" + (FIXED[name] ? " fixed" : "") + (REMOTE[name] ? " remote" : "") + (s ? " s-" + s : ""));
     g.setAttribute("aria-label", name + (s ? ", " + t(LABEL_KEY[s]) : ""));
     g.setAttribute("aria-pressed", s ? "true" : "false");
   }
@@ -268,6 +272,7 @@
     var c = { d: 0, l: 0, v: 0 };
     PLANETS.forEach(function (p) { var s = marks[p[0]]; if (s) c[s]++; });
     nEl.textContent = c.d + c.l;
+    document.getElementById("total").textContent = "/ " + (PLANETS.length - Object.keys(FIXED).length);
     extraEl.textContent = t("loyalWord") + " " + c.l + " · " + t("emptyWord") + " " + c.v;
   }
 
@@ -282,6 +287,7 @@
   }
   function tap(name) {
     if (locked) return;
+    if (FIXED[name]) { showNote(t("fixedNote")); return; }
     if (mode === "l" && REMOTE[name]) { showNote(t("remoteNote")); return; }
     if (marks[name] === mode) delete marks[name]; else marks[name] = mode;
     backup = null; undoBtn.hidden = true;
