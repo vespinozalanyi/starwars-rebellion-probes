@@ -96,9 +96,9 @@
   .planet { cursor: pointer; outline: none; }
   .planet .hit { fill: transparent; }
   .planet .m { opacity: 0; transition: opacity .12s ease; pointer-events: none; }
-  .planet.s-d .m-d, .planet.s-l .m-l, .planet.s-v .m-v { opacity: 1; }
-  .planet.s-l .m-d { opacity: 1; }
+  .planet.s-d .m-d, .planet.s-l .m-b, .planet.s-l .m-l, .planet.s-v .m-v { opacity: 1; }
   .m-d { fill: #b3262e; }
+  .m-b { fill: #000; }
   .m-l { fill: none; stroke: #fff; stroke-width: 7; }
   .m-v { fill: none; stroke: #000; stroke-width: 8; stroke-linecap: round; }
   .planet:focus-visible .hit { stroke: #1f4d7a; stroke-width: 4; }
@@ -134,7 +134,7 @@
       <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="#b3262e"/></svg><span data-i18n="mDisc">Descubierto</span>
     </button>
     <button type="button" role="radio" aria-checked="false" data-mode="l">
-      <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="#b3262e"/><circle cx="10" cy="10" r="4.2" fill="none" stroke="#fff" stroke-width="2"/></svg><span data-i18n="mLoyal">Leal</span>
+      <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="currentColor"/><circle cx="10" cy="10" r="4.2" fill="none" stroke="var(--panel)" stroke-width="2"/></svg><span data-i18n="mLoyal">Leal</span>
     </button>
     <button type="button" role="radio" aria-checked="false" data-mode="v">
       <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M5.5 5.5l9 9M14.5 5.5l-9 9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span data-i18n="mEmpty">Vacío</span>
@@ -269,6 +269,7 @@
     var g = mk("g", { "class": "planet", role: "button", tabindex: "0", "aria-label": p[0] });
     g.appendChild(mk("circle", { "class": "hit", cx: p[1], cy: p[2], r: p[3] + 14 }));
     g.appendChild(mk("circle", { "class": "m m-d", cx: p[1], cy: p[2], r: p[3] + 1 }));
+    g.appendChild(mk("circle", { "class": "m m-b", cx: p[1], cy: p[2], r: p[3] + 1 }));
     g.appendChild(mk("circle", { "class": "m m-l", cx: p[1], cy: p[2], r: Math.round(p[3] * 0.45) }));
     var d = Math.round(p[3] * 0.62);
     g.appendChild(mk("path", { "class": "m m-v", d: "M" + (p[1] - d) + " " + (p[2] - d) + "L" + (p[1] + d) + " " + (p[2] + d) + "M" + (p[1] + d) + " " + (p[2] - d) + "L" + (p[1] - d) + " " + (p[2] + d) }));
