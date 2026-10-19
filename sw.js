@@ -1,5 +1,5 @@
 /* Service worker: guarda la app en el teléfono para abrirla sin internet. */
-const CACHE = "sondas-v4";
+const CACHE = "sondas-v5";
 const FILES = ["./", "index.html", "map.png", "manifest.webmanifest", "icon-192.png", "icon-512.png", "icon-512-maskable.png", "icon-180.png"];
 
 self.addEventListener("install", (e) => {
