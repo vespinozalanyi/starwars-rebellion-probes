@@ -73,6 +73,10 @@
   button.ghost { background: transparent; }
   button.on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
 
+  .lang { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; background: var(--panel); }
+  .lang button { border: 0; border-radius: 0; min-width: 46px; padding: 0 12px; background: transparent; letter-spacing: .06em; }
+  .lang button + button { border-left: 1px solid var(--line); }
+  .lang button.on { background: var(--accent); color: var(--accent-ink); }
   .modes { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
   .modes .cap { font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-right: 4px; }
   .modes button { display: inline-flex; align-items: center; gap: 8px; }
@@ -109,40 +113,44 @@
 <div class="app" id="app">
   <div class="bar">
     <div class="count" aria-live="polite">
-      <span class="n" id="n">0</span><span class="of">/ 32</span><span class="lbl">planetas descubiertos</span>
+      <span class="n" id="n">0</span><span class="of">/ 32</span><span class="lbl" data-i18n="discovered">planetas descubiertos</span>
       <span class="extra" id="extra">Leales 0 · Vacíos 0</span>
     </div>
     <div class="actions">
-      <button id="undo" class="ghost" type="button" hidden>Deshacer</button>
+      <div class="lang" role="radiogroup" data-i18n-aria="langAria" aria-label="Idioma">
+        <button type="button" role="radio" data-lang="es" aria-checked="true" class="on">ES</button>
+        <button type="button" role="radio" data-lang="en" aria-checked="false">EN</button>
+      </div>
+      <button id="undo" class="ghost" type="button" data-i18n="undo" hidden>Deshacer</button>
       <button id="zoom" type="button" aria-pressed="false">Ampliar</button>
       <button id="lock" type="button" aria-pressed="false"><i class="fill"></i><span id="lockTxt">Bloquear</span></button>
-      <button id="clear" class="danger" type="button">Limpiar todo</button>
+      <button id="clear" class="danger" type="button" data-i18n="clear">Limpiar todo</button>
     </div>
   </div>
 
-  <div class="modes" role="radiogroup" aria-label="Qué marcar">
-    <span class="cap">Marcar</span>
+  <div class="modes" role="radiogroup" data-i18n-aria="modesAria" aria-label="Qué marcar">
+    <span class="cap" data-i18n="mark">Marcar</span>
     <button type="button" role="radio" aria-checked="true" data-mode="d" class="on">
-      <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="#b3262e"/></svg>Descubierto
+      <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="#b3262e"/></svg><span data-i18n="mDisc">Descubierto</span>
     </button>
     <button type="button" role="radio" aria-checked="false" data-mode="l">
-      <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="#b3262e"/><circle cx="10" cy="10" r="4.2" fill="none" stroke="#fff" stroke-width="2"/></svg>Leal
+      <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="#b3262e"/><circle cx="10" cy="10" r="4.2" fill="none" stroke="#fff" stroke-width="2"/></svg><span data-i18n="mLoyal">Leal</span>
     </button>
     <button type="button" role="radio" aria-checked="false" data-mode="v">
-      <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M5.5 5.5l9 9M14.5 5.5l-9 9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Vacío
+      <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M5.5 5.5l9 9M14.5 5.5l-9 9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span data-i18n="mEmpty">Vacío</span>
     </button>
   </div>
 
-  <div class="banner" id="nostore" hidden>Este navegador no está guardando las marcas. Si cierras la página se perderán. Ábrelo en Chrome o Safari desde el enlace, o instálalo en la pantalla de inicio.</div>
+  <div class="banner" id="nostore" data-i18n="nostore" hidden>Este navegador no está guardando las marcas. Si cierras la página se perderán. Ábrelo en Chrome o Safari desde el enlace, o instálalo en la pantalla de inicio.</div>
 
   <div class="sheet" id="sheet">
-    <svg class="map" id="map" viewBox="0 0 1738 1024" role="group" aria-label="Mapa de la galaxia">
+    <svg class="map" id="map" viewBox="0 0 1738 1024" role="group" data-i18n-aria="mapAria" aria-label="Mapa de la galaxia">
       <image href="map.png" x="0" y="0" width="1738" height="1024"/>
       <g id="planets"></g>
     </svg>
   </div>
 
-  <p class="hint">Elige qué marcar y toca un círculo. Tócalo otra vez con el mismo modo para quitar la marca. Las marcas se guardan en este teléfono y nadie más las ve. Bloquear evita toques accidentales: para desbloquear, mantén pulsado el botón.</p>
+  <p class="hint" data-i18n="hint">Elige qué marcar y toca un círculo. Tócalo otra vez con el mismo modo para quitar la marca. Las marcas se guardan en este teléfono y nadie más las ve. Bloquear evita toques accidentales: para desbloquear, mantén pulsado el botón.</p>
 </div>
 
 <script>
@@ -157,10 +165,43 @@
     ["Hoth",1618,758,33],["Alderaan",704,778,34],["Bespin",1395,802,30],["Ord Mantell",566,844,28],
     ["Ilum",342,904,39],["Corellia",1123,904,40],["Endor",1498,926,38],["Coruscant",860,933,52]
   ];
+  var STR = {
+    es: {
+      title: "Mapa de Sondas",
+      desc: "Mapa interactivo para marcar los planetas descubiertos en Star Wars Rebellion.",
+      discovered: "planetas descubiertos", loyalWord: "Leales", emptyWord: "Vacíos",
+      undo: "Deshacer", zoomIn: "Ampliar", zoomOut: "Reducir",
+      lock: "Bloquear", unlockHold: "Mantén para desbloquear", clear: "Limpiar todo",
+      mark: "Marcar", mDisc: "Descubierto", mLoyal: "Leal", mEmpty: "Vacío",
+      lDisc: "descubierto", lLoyal: "leal", lEmpty: "vacío",
+      modesAria: "Qué marcar", mapAria: "Mapa de la galaxia", langAria: "Idioma",
+      nostore: "Este navegador no está guardando las marcas. Si cierras la página se perderán. Ábrelo en Chrome o Safari desde el enlace, o instálalo en la pantalla de inicio.",
+      hint: "Elige qué marcar y toca un círculo. Tócalo otra vez con el mismo modo para quitar la marca. Las marcas se guardan en este teléfono y nadie más las ve. Bloquear evita toques accidentales: para desbloquear, mantén pulsado el botón."
+    },
+    en: {
+      title: "Probe Card Tracker",
+      desc: "Interactive map to mark discovered planets in Star Wars Rebellion.",
+      discovered: "discovered planets", loyalWord: "Loyal", emptyWord: "Empty",
+      undo: "Undo", zoomIn: "Zoom in", zoomOut: "Zoom out",
+      lock: "Lock", unlockHold: "Hold to unlock", clear: "Clear all",
+      mark: "Mark", mDisc: "Discovered", mLoyal: "Loyal", mEmpty: "Empty",
+      lDisc: "discovered", lLoyal: "loyal", lEmpty: "empty",
+      modesAria: "What to mark", mapAria: "Galaxy map", langAria: "Language",
+      nostore: "This browser is not saving your marks. If you close the page they will be lost. Open the link in Chrome or Safari, or install it on your home screen.",
+      hint: "Pick what to mark and tap a circle. Tap it again with the same mode to remove the mark. Marks are saved on this phone and nobody else can see them. Lock prevents accidental taps: to unlock, press and hold the button."
+    }
+  };
+  var LANG_KEY = "probe-lang";
+  var lang = /^es/i.test(navigator.language || "") ? "es" : "en";
+  try {
+    var sl = localStorage.getItem(LANG_KEY);
+    if (sl === "es" || sl === "en") lang = sl;
+  } catch (e) {}
+  function t(k) { return STR[lang][k]; }
   var KEY = "rebellion-probe-marks-v2";
   var OLD_KEY = "rebellion-probe-marks-v1";
   var NS = "http://www.w3.org/2000/svg";
-  var LABEL = { d: "descubierto", l: "leal", v: "vacío" };
+  var LABEL_KEY = { d: "lDisc", l: "lLoyal", v: "lEmpty" };
   var layer = document.getElementById("planets");
   var app = document.getElementById("app");
   var nEl = document.getElementById("n");
@@ -204,7 +245,7 @@
     var g = nodes[name];
     var s = marks[name];
     g.setAttribute("class", "planet" + (s ? " s-" + s : ""));
-    g.setAttribute("aria-label", name + (s ? ", " + LABEL[s] : ""));
+    g.setAttribute("aria-label", name + (s ? ", " + t(LABEL_KEY[s]) : ""));
     g.setAttribute("aria-pressed", s ? "true" : "false");
   }
 
@@ -212,7 +253,7 @@
     var c = { d: 0, l: 0, v: 0 };
     PLANETS.forEach(function (p) { var s = marks[p[0]]; if (s) c[s]++; });
     nEl.textContent = c.d + c.l;
-    extraEl.textContent = "Leales " + c.l + " · Vacíos " + c.v;
+    extraEl.textContent = t("loyalWord") + " " + c.l + " · " + t("emptyWord") + " " + c.v;
   }
 
   function paintAll() { PLANETS.forEach(function (p) { paint(p[0]); }); update(); }
@@ -270,7 +311,7 @@
   var sheet = document.getElementById("sheet");
   zoomBtn.addEventListener("click", function () {
     var z = sheet.classList.toggle("zoom");
-    zoomBtn.textContent = z ? "Reducir" : "Ampliar";
+    zoomBtn.textContent = z ? t("zoomOut") : t("zoomIn");
     zoomBtn.setAttribute("aria-pressed", z ? "true" : "false");
     if (!z) { sheet.scrollLeft = 0; sheet.scrollTop = 0; }
   });
@@ -281,7 +322,7 @@
     app.classList.toggle("locked", v);
     lockBtn.classList.toggle("on", v);
     lockBtn.setAttribute("aria-pressed", v ? "true" : "false");
-    lockTxt.textContent = v ? "Mantén para desbloquear" : "Bloquear";
+    lockTxt.textContent = v ? t("unlockHold") : t("lock");
     clearBtn.disabled = v;
     undoBtn.disabled = v;
     modeBtns.forEach(function (b) { b.disabled = v; });
@@ -303,6 +344,36 @@
     if (e.detail === 0) setLocked(false); /* teclado */
   });
   lockBtn.addEventListener("contextmenu", function (e) { if (locked) e.preventDefault(); });
+
+  var langBtns = Array.prototype.slice.call(document.querySelectorAll("[data-lang]"));
+  var descMeta = document.querySelector('meta[name="description"]');
+  function applyLang() {
+    document.documentElement.lang = lang;
+    document.title = t("title");
+    if (descMeta) descMeta.setAttribute("content", t("desc"));
+    Array.prototype.forEach.call(document.querySelectorAll("[data-i18n]"), function (el) {
+      el.textContent = t(el.getAttribute("data-i18n"));
+    });
+    Array.prototype.forEach.call(document.querySelectorAll("[data-i18n-aria]"), function (el) {
+      el.setAttribute("aria-label", t(el.getAttribute("data-i18n-aria")));
+    });
+    zoomBtn.textContent = sheet.classList.contains("zoom") ? t("zoomOut") : t("zoomIn");
+    lockTxt.textContent = locked ? t("unlockHold") : t("lock");
+    langBtns.forEach(function (b) {
+      var on = b.getAttribute("data-lang") === lang;
+      b.classList.toggle("on", on);
+      b.setAttribute("aria-checked", on ? "true" : "false");
+    });
+    paintAll();
+  }
+  langBtns.forEach(function (b) {
+    b.addEventListener("click", function () {
+      lang = b.getAttribute("data-lang");
+      try { localStorage.setItem(LANG_KEY, lang); } catch (e) {}
+      applyLang();
+    });
+  });
+  applyLang();
 
   if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) {
     window.addEventListener("load", function () {

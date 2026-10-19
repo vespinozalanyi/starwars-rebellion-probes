@@ -1,8 +1,7 @@
 {
-  "name": "Mapa de Sondas",
+  "name": "Mapa de Sondas / Probe Card Tracker",
   "short_name": "Sondas",
-  "description": "Marca los planetas descubiertos en Star Wars Rebellion.",
-  "lang": "es",
+  "description": "Marca los planetas descubiertos en Star Wars Rebellion. / Mark discovered planets in Star Wars Rebellion.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
